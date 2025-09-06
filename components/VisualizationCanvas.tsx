@@ -274,7 +274,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({ diagra
         defs.append('marker')
             .attr('id', 'arrowhead')
             .attr('viewBox', '-0 -5 10 10')
-            .attr('refX', 19) // Adjust to sit on the edge of the node
+            .attr('refX', 10)
             .attr('refY', 0)
             .attr('orient', 'auto')
             .attr('markerWidth', 5)
@@ -288,15 +288,35 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({ diagra
             .attr('class', 'links');
 
         linkGroup.append("line")
-            .attr("x1", d => (d.source as D3Node).x || 0)
-            .attr("y1", d => (d.source as D3Node).y || 0)
-            .attr("x2", d => (d.target as D3Node).x || 0)
-            .attr("y2", d => (d.target as D3Node).y || 0)
+            .each(function(d) {
+                const line = d3.select(this);
+                const source = d.source as D3Node;
+                const target = d.target as D3Node;
+
+                if (!source.x || !source.y || !target.x || !target.y) return;
+
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance === 0) return;
+
+                const targetPadding = 45;
+                const sourcePadding = 15;
+
+                const x1 = source.x + (dx / distance) * sourcePadding;
+                const y1 = source.y + (dy / distance) * sourcePadding;
+                const x2 = target.x - (dx / distance) * targetPadding;
+                const y2 = target.y - (dy / distance) * targetPadding;
+
+                line.attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2);
+            })
             .attr("stroke", "#9ca3af")
             .attr("stroke-width", 2)
             .attr("marker-end", "url(#arrowhead)");
 
         const nodeGroup = svg.append("g").selectAll("g").data(nodes).join("g")
+            .attr("id", d => `node-${d.id.replace(/[^a-zA-Z0-9]/g, '-')}`)
             .attr("transform", d => `translate(${d.x || width / 2}, ${d.y || height / 2})`)
             .on('click', (event, d) => {
                 if (linkingState && linkingState.source.id !== d.id) {
@@ -414,7 +434,8 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({ diagra
             const linkingLine = svg.append('line').attr('class', 'linking-line')
                 .attr('x1', linkingState.source.x || 0).attr('y1', linkingState.source.y || 0)
                 .attr('x2', linkingState.source.x || 0).attr('y2', linkingState.source.y || 0)
-                .attr('stroke', '#f97316').attr('stroke-width', 2).attr('stroke-dasharray', '5, 5');
+                .attr('stroke', '#f97316').attr('stroke-width', 2).attr('stroke-dasharray', '5, 5')
+                .style('pointer-events', 'none');
             svg.on('mousemove.linking', (event) => {
                 const [mx, my] = d3.pointer(event);
                 linkingLine.attr('x2', mx).attr('y2', my);
