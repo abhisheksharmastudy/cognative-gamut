@@ -1,0 +1,5 @@
+{
+  "name": "Cognitive Gamut: Keyword Visualizer",
+  "description": "An interactive application to extract keywords from text and visualize them as various diagrams. Gamify your learning and research by assembling, disassembling, and reorganizing concepts in a visually stunning interface powered by Gemini.",
+  "requestFramePermissions": []
+}
